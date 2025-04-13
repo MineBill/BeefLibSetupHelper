@@ -1,0 +1,5 @@
+namespace BeefLibSetupHelper;
+
+class Clone
+{
+}
