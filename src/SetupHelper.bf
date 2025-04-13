@@ -54,36 +54,54 @@ public static class SetupHelper
 
 	public static void ConfigureAndBuild(StringView txtPath, StringView buildPath = "cmake-build")
 	{
-		mixin RunCmd(StringView cmd)
-		{
-			var process = scope SpawnedProcess();
-			var processInfo = scope ProcessStartInfo();
-			processInfo.SetFileNameAndArguments(cmd);
-			processInfo.CreateNoWindow = true;
-			processInfo.UseShellExecute = true;
-			processInfo.RedirectStandardOutput = true;
+		ExecuteCmd("cmake.exe", scope $"-S {txtPath} -B {buildPath}");
+		ExecuteCmd("cmake.exe", scope $"--build {buildPath} --config Debug");
+		ExecuteCmd("cmake.exe", scope $"--build {buildPath} --config Release");
+	}
 
-			process.Start(processInfo);
-
-			FileStream stream = scope .();
-			process.AttachStandardOutput(stream);
-			StreamReader r = scope .(stream);
-			Console.OnCancel.Add(new (cancelKind, terminate) => {
-			    process.Kill();
-			    terminate = true;
-			});
-
-			String output = scope .();
-			while(true)
+	public static void ExecuteCmd(StringView cmd, StringView args, String stdOut = null, String stdErr = null)
+	{
+		var info = scope ProcessStartInfo()
 			{
-			    if (r.ReadLine(output..Clear()) case .Err)
-					break;
-			    Console.WriteLine(output);
-			}
+				UseShellExecute = false,
+				RedirectStandardOutput = stdOut != null,
+				RedirectStandardError = stdErr != null
+			};
+
+		info.SetFileName(cmd);
+		info.SetArguments(args);
+		SpawnedProcess process = scope .();
+
+		if (process.Start(info) case .Err)
+		{
+			Console.WriteLine(scope $"Failed to execute: {cmd}");
+			return;
 		}
 
-		RunCmd!(scope $"cmake.exe -S {txtPath} -B {buildPath}");
-		RunCmd!(scope $"cmake.exe --build {buildPath} --config Debug");
-		RunCmd!(scope $"cmake.exe --build {buildPath} --config Release");
+		FileStream outputStream = scope .();
+		FileStream errStream = scope .();
+		if (stdOut != null)
+			process.AttachStandardOutput(outputStream);
+
+		if (stdErr != null)
+			process.AttachStandardOutput(errStream);
+
+		if (stdOut != null)
+		{
+			StreamReader reader = scope .(outputStream);
+
+			if (reader.ReadToEnd(stdOut) case .Err)
+				Console.WriteLine("Failed to read process output");
+		}
+
+		if (stdErr != null)
+		{
+			StreamReader reader = scope .(errStream);
+
+			if (reader.ReadToEnd(stdOut) case .Err)
+				Console.WriteLine("Failed to read process output");
+		}
+
+		process.WaitFor();
 	}
 }
