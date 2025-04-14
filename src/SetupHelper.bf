@@ -6,8 +6,7 @@ namespace BeefLibSetupHelper;
 
 public static class SetupHelper
 {
-	private static String s_What;
-
+#if false
 	public enum Error
 	{
 		case GitMissing;
@@ -27,7 +26,6 @@ public static class SetupHelper
 
 	public static Result<void, Error> CheckDeps()
 	{
-		//Runtime.Assert(false, "TODO");
 		return .Ok;
 	}
 
@@ -51,15 +49,9 @@ public static class SetupHelper
 	{
 		Runtime.Assert(false, "TODO");
 	}
+#endif
 
-	public static void ConfigureAndBuild(StringView txtPath, StringView buildPath = "cmake-build")
-	{
-		ExecuteCmd("cmake.exe", scope $"-S {txtPath} -B {buildPath}");
-		ExecuteCmd("cmake.exe", scope $"--build {buildPath} --config Debug");
-		ExecuteCmd("cmake.exe", scope $"--build {buildPath} --config Release");
-	}
-
-	public static void ExecuteCmd(StringView cmd, StringView args, String stdOut = null, String stdErr = null)
+	public static Result<void, int> ExecuteCmd(StringView cmd, StringView args, String stdOut = null, String stdErr = null)
 	{
 		var info = scope ProcessStartInfo()
 			{
@@ -74,8 +66,7 @@ public static class SetupHelper
 
 		if (process.Start(info) case .Err)
 		{
-			Console.WriteLine(scope $"Failed to execute: {cmd}");
-			return;
+			return .Err(-1);
 		}
 
 		FileStream outputStream = scope .();
@@ -103,5 +94,8 @@ public static class SetupHelper
 		}
 
 		process.WaitFor();
+		if (process.ExitCode == 0)
+			return .Ok;
+		return .Err(process.ExitCode);
 	}
 }
