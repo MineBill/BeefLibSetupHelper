@@ -29,7 +29,7 @@ public static class CMake
 #if BF_PLATFORM_WINDOWS
 		buff.Append("Visual Studio 17 2022");
 #elif BF_PLATFORM_LINUX
-		buff.Append("Ninje Multi-Config");
+		buff.Append("Ninja Multi-Config");
 #endif
 	}
 
