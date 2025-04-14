@@ -20,7 +20,7 @@ public static class CMake
 			buff.Append(path);
 			return .Ok;
 		}
-		buff.Append("cmakee");
+		buff.Append("cmake");
 		return .Ok;
 	}
 
