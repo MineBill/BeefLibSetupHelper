@@ -55,7 +55,11 @@ public static class SetupHelper
 	{
 		var info = scope ProcessStartInfo()
 			{
+#if BF_PLATFORM_WINDOWS
 				UseShellExecute = false,
+#else
+				UseShellExecute = true,
+#endif
 				RedirectStandardOutput = stdOut != null,
 				RedirectStandardError = stdErr != null
 			};
